@@ -28,8 +28,24 @@ function addMovie(type) {
   const title = titleInput.value.trim();
   if (!title) return;
 
-  const movieDiv = createMovieCard(title, imageInput, type);
-  movieList.appendChild(movieDiv);
+  const reader = new FileReader();
+  reader.onload = function (e) {
+    const imageData = e.target.result;
+    const movieData = { title, image: imageData };
+    saveMovie(type, movieData);
+    const movieDiv = createMovieCard(title, null, type, imageData);
+    movieList.appendChild(movieDiv);
+  };
+
+  if (imageInput.files.length > 0) {
+    reader.readAsDataURL(imageInput.files[0]);
+  } else {
+    const defaultImage = 'https://via.placeholder.com/150x220';
+    const movieData = { title, image: defaultImage };
+    saveMovie(type, movieData);
+    const movieDiv = createMovieCard(title, null, type, defaultImage);
+    movieList.appendChild(movieDiv);
+  }
 
   titleInput.value = '';
   imageInput.value = '';
@@ -106,18 +122,13 @@ function showActionPopup(movieDiv, title, listType) {
     btn.style.margin = '10px';
     btn.onclick = () => {
       if (option === 'Watch This') {
-        const currentList = document.getElementById('watching-movies');
-        const newCard = createMovieCard(title, null, 'watching', movieDiv.dataset.image);
-        currentList.appendChild(newCard);
-        movieDiv.remove();
+        moveMovie(title, listType, 'watching', movieDiv.dataset.image);
       } else if (option === 'Finish Watching') {
-        const finishedList = document.getElementById('finished-movies');
-        const newCard = createMovieCard(title, null, 'finished', movieDiv.dataset.image);
-        finishedList.appendChild(newCard);
-        movieDiv.remove();
+        moveMovie(title, listType, 'finished', movieDiv.dataset.image);
       } else if (option === 'Stop Watching' || option === 'Remove') {
-        movieDiv.remove();
+        removeMovie(title, listType);
       }
+      movieDiv.remove();
       document.body.removeChild(overlay);
     };
     popup.appendChild(btn);
@@ -131,3 +142,40 @@ function showActionPopup(movieDiv, title, listType) {
   overlay.appendChild(popup);
   document.body.appendChild(overlay);
 }
+
+// --- LocalStorage Helpers ---
+
+function saveMovie(type, movie) {
+  const list = JSON.parse(localStorage.getItem(type)) || [];
+  list.push(movie);
+  localStorage.setItem(type, JSON.stringify(list));
+}
+
+function removeMovie(title, type) {
+  let list = JSON.parse(localStorage.getItem(type)) || [];
+  list = list.filter(movie => movie.title !== title);
+  localStorage.setItem(type, JSON.stringify(list));
+}
+
+function moveMovie(title, fromType, toType, imageUrl) {
+  removeMovie(title, fromType);
+  const movieData = { title, image: imageUrl };
+  saveMovie(toType, movieData);
+
+  const targetList = document.getElementById(`${toType}-movies`);
+  const newCard = createMovieCard(title, null, toType, imageUrl);
+  targetList.appendChild(newCard);
+}
+
+function loadMoviesOnStart() {
+  ['watchlist', 'watching', 'finished'].forEach(type => {
+    const container = document.getElementById(`${type}-movies`);
+    const list = JSON.parse(localStorage.getItem(type)) || [];
+    list.forEach(movie => {
+      const card = createMovieCard(movie.title, null, type, movie.image);
+      container.appendChild(card);
+    });
+  });
+}
+
+window.onload = loadMoviesOnStart;
