@@ -1,181 +1,192 @@
-function showPage(id) {
-  document.querySelectorAll('.page-section').forEach(section => {
-    section.classList.add('hidden');
-  });
-  document.getElementById(id).classList.remove('hidden');
-  document.body.classList.toggle('theme-home', id === 'home');
-}
-
-function setTheme(theme) {
-  document.body.className = `theme-${theme} theme-home`;
-}
-
-document.getElementById('profile-upload').addEventListener('change', function () {
-  if (this.files.length > 0) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      document.getElementById('profile-pic').src = e.target.result;
-    };
-    reader.readAsDataURL(this.files[0]);
-  }
-});
-
-function addMovie(type) {
-  const titleInput = document.getElementById(`${type}-title`);
-  const imageInput = document.getElementById(`${type}-image`);
-  const movieList = document.getElementById(`${type}-movies`);
-
-  const title = titleInput.value.trim();
-  if (!title) return;
-
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const imageData = e.target.result;
-    const movieData = { title, image: imageData };
-    saveMovie(type, movieData);
-    const movieDiv = createMovieCard(title, null, type, imageData);
-    movieList.appendChild(movieDiv);
+document.addEventListener('DOMContentLoaded', function () {
+  window.showPage = function (id) {
+    document.querySelectorAll('.page-section').forEach(section => {
+      section.classList.add('hidden');
+    });
+    document.getElementById(id).classList.remove('hidden');
+    document.body.classList.toggle('theme-home', id === 'home');
   };
 
-  if (imageInput.files.length > 0) {
-    reader.readAsDataURL(imageInput.files[0]);
-  } else {
-    const defaultImage = 'https://via.placeholder.com/150x220';
-    const movieData = { title, image: defaultImage };
-    saveMovie(type, movieData);
-    const movieDiv = createMovieCard(title, null, type, defaultImage);
-    movieList.appendChild(movieDiv);
-  }
+  window.setTheme = function (theme) {
+    document.body.className = `theme-${theme} theme-home`;
+  };
 
-  titleInput.value = '';
-  imageInput.value = '';
-}
-
-function createMovieCard(title, imageInput, listType, imageUrl = '') {
-  const movieDiv = document.createElement('div');
-  movieDiv.classList.add('movie');
-
-  const img = document.createElement('img');
-
-  if (imageInput && imageInput.files.length > 0) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-      img.src = e.target.result;
-      movieDiv.dataset.image = e.target.result;
-    };
-    reader.readAsDataURL(imageInput.files[0]);
-  } else if (imageUrl) {
-    img.src = imageUrl;
-    movieDiv.dataset.image = imageUrl;
-  } else {
-    img.src = 'https://via.placeholder.com/150x220';
-    movieDiv.dataset.image = 'https://via.placeholder.com/150x220';
-  }
-
-  const caption = document.createElement('p');
-  caption.textContent = title;
-
-  movieDiv.appendChild(img);
-  movieDiv.appendChild(caption);
-
-  movieDiv.addEventListener('click', () => {
-    showActionPopup(movieDiv, title, listType);
+  document.getElementById('profile-upload').addEventListener('change', function () {
+    if (this.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        document.getElementById('profile-pic').src = e.target.result;
+      };
+      reader.readAsDataURL(this.files[0]);
+    }
   });
 
-  return movieDiv;
-}
+  window.showFolderPrompt = function () {
+    const existing = document.querySelector('.folder-popup');
+    if (existing) existing.remove();
 
-function showActionPopup(movieDiv, title, listType) {
-  const overlay = document.createElement('div');
-  overlay.style.position = 'fixed';
-  overlay.style.top = 0;
-  overlay.style.left = 0;
-  overlay.style.width = '100%';
-  overlay.style.height = '100%';
-  overlay.style.backgroundColor = 'rgba(0,0,0,0.5)';
-  overlay.style.display = 'flex';
-  overlay.style.justifyContent = 'center';
-  overlay.style.alignItems = 'center';
-  overlay.style.zIndex = '1000';
+    const overlay = document.createElement('div');
+    overlay.className = 'folder-popup';
 
-  const popup = document.createElement('div');
-  popup.style.background = 'white';
-  popup.style.color = 'black';
-  popup.style.padding = '20px';
-  popup.style.borderRadius = '8px';
-  popup.style.textAlign = 'center';
+    const popup = document.createElement('div');
+    popup.className = 'popup-content';
 
-  const titleEl = document.createElement('h3');
-  titleEl.textContent = title;
-  popup.appendChild(titleEl);
+    const title = document.createElement('h3');
+    title.textContent = 'New Folder';
+    popup.appendChild(title);
 
-  let options = [];
-  if (listType === 'watchlist') {
-    options = ['Watch This', 'Remove'];
-  } else if (listType === 'watching') {
-    options = ['Finish Watching', 'Stop Watching'];
-  }
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Folder name';
+    popup.appendChild(input);
 
-  options.forEach(option => {
-    const btn = document.createElement('button');
-    btn.textContent = option;
-    btn.style.margin = '10px';
-    btn.onclick = () => {
-      if (option === 'Watch This') {
-        moveMovie(title, listType, 'watching', movieDiv.dataset.image);
-      } else if (option === 'Finish Watching') {
-        moveMovie(title, listType, 'finished', movieDiv.dataset.image);
-      } else if (option === 'Stop Watching' || option === 'Remove') {
-        removeMovie(title, listType);
+    const warning = document.createElement('p');
+    warning.style.color = 'red';
+    warning.style.fontSize = '12px';
+    warning.style.margin = '0';
+    warning.style.display = 'none';
+    popup.appendChild(warning);
+
+    const colorLabel = document.createElement('label');
+    colorLabel.textContent = 'Choose color:';
+    popup.appendChild(colorLabel);
+
+    const colorWrapper = document.createElement('div');
+    colorWrapper.style.display = 'flex';
+    colorWrapper.style.alignItems = 'center';
+    colorWrapper.style.gap = '10px';
+
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.value = '#cccccc';
+    colorWrapper.appendChild(colorInput);
+
+    const colorDot = document.createElement('span');
+    colorDot.style.width = '20px';
+    colorDot.style.height = '20px';
+    colorDot.style.borderRadius = '50%';
+    colorDot.style.border = '1px solid #ccc';
+    colorDot.style.backgroundColor = colorInput.value;
+    colorWrapper.appendChild(colorDot);
+
+    const colorHexLabel = document.createElement('span');
+    colorHexLabel.textContent = colorInput.value;
+    colorWrapper.appendChild(colorHexLabel);
+
+    colorInput.addEventListener('input', () => {
+      colorDot.style.backgroundColor = colorInput.value;
+      colorHexLabel.textContent = colorInput.value;
+    });
+
+    popup.appendChild(colorWrapper);
+
+    const buttons = document.createElement('div');
+    buttons.className = 'popup-buttons';
+
+    const createBtn = document.createElement('button');
+    createBtn.textContent = 'Create';
+    createBtn.onclick = () => {
+      const name = input.value.trim();
+      if (name) {
+        window.createFolder(name, colorInput.value);
+        overlay.remove();
+      } else {
+        warning.textContent = 'Please enter a folder name.';
+        warning.style.display = 'block';
       }
-      movieDiv.remove();
-      document.body.removeChild(overlay);
     };
-    popup.appendChild(btn);
-  });
 
-  const cancelBtn = document.createElement('button');
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.onclick = () => document.body.removeChild(overlay);
-  popup.appendChild(cancelBtn);
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = 'Cancel';
+    cancelBtn.style.background = '#aaa';
+    cancelBtn.style.color = '#fff';
+    cancelBtn.onclick = () => overlay.remove();
 
-  overlay.appendChild(popup);
-  document.body.appendChild(overlay);
-}
+    buttons.appendChild(createBtn);
+    buttons.appendChild(cancelBtn);
+    popup.appendChild(buttons);
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+  };
 
-// --- LocalStorage Helpers ---
+  window.createFolder = function (name, color) {
+    const container = document.getElementById('watchlist-folders');
+    const emptyNote = document.getElementById('empty-watchlist');
+    if (emptyNote) emptyNote.remove();
 
-function saveMovie(type, movie) {
-  const list = JSON.parse(localStorage.getItem(type)) || [];
-  list.push(movie);
-  localStorage.setItem(type, JSON.stringify(list));
-}
+    const folder = document.createElement('div');
+    folder.className = 'drive-folder';
+    folder.style.backgroundColor = color;
+    folder.style.opacity = '0';
+    folder.style.transform = 'scale(0.85)';
 
-function removeMovie(title, type) {
-  let list = JSON.parse(localStorage.getItem(type)) || [];
-  list = list.filter(movie => movie.title !== title);
-  localStorage.setItem(type, JSON.stringify(list));
-}
+    const folderName = document.createElement('span');
+    folderName.textContent = name;
+    folder.appendChild(folderName);
 
-function moveMovie(title, fromType, toType, imageUrl) {
-  removeMovie(title, fromType);
-  const movieData = { title, image: imageUrl };
-  saveMovie(toType, movieData);
+    const actions = document.createElement('div');
+    actions.className = 'folder-actions hidden';
 
-  const targetList = document.getElementById(`${toType}-movies`);
-  const newCard = createMovieCard(title, null, toType, imageUrl);
-  targetList.appendChild(newCard);
-}
+    const renameBtn = document.createElement('button');
+    renameBtn.textContent = 'Rename';
+    renameBtn.onclick = (e) => {
+      e.stopPropagation();
+      const newName = prompt('Enter new folder name:', folderName.textContent);
+      if (newName) folderName.textContent = newName;
+    };
 
-function loadMoviesOnStart() {
-  ['watchlist', 'watching', 'finished'].forEach(type => {
-    const container = document.getElementById(`${type}-movies`);
-    const list = JSON.parse(localStorage.getItem(type)) || [];
-    list.forEach(movie => {
-      const card = createMovieCard(movie.title, null, type, movie.image);
-      container.appendChild(card);
+    const deleteBtn = document.createElement('button');
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = (e) => {
+      e.stopPropagation();
+      const confirmDelete = confirm(`Are you sure you want to delete "${folderName.textContent}"?`);
+      if (confirmDelete) {
+        folder.remove();
+        if (container.children.length === 0) {
+          const note = document.createElement('p');
+          note.textContent = 'No folders yet. Tap the + button to create one.';
+          note.id = 'empty-watchlist';
+          note.style.textAlign = 'center';
+          note.style.marginTop = '20px';
+          note.style.opacity = '0.6';
+          container.appendChild(note);
+        }
+      }
+    };
+
+    actions.appendChild(renameBtn);
+    actions.appendChild(deleteBtn);
+    folder.appendChild(actions);
+    container.appendChild(folder);
+
+    // Show/hide on double click
+    folder.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      actions.classList.toggle('hidden');
+    });
+
+    requestAnimationFrame(() => {
+      folder.style.transition = 'all 0.3s ease';
+      folder.style.opacity = '1';
+      folder.style.transform = 'scale(1)';
+    });
+  };
+
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', () => {
+      const target = card.getAttribute('data-target');
+      window.showPage(target);
     });
   });
-}
 
-window.onload = loadMoviesOnStart;
+  const folderContainer = document.getElementById('watchlist-folders');
+  if (folderContainer && folderContainer.children.length === 0) {
+    const note = document.createElement('p');
+    note.textContent = 'No folders yet. Tap the + button to create one.';
+    note.id = 'empty-watchlist';
+    note.style.textAlign = 'center';
+    note.style.marginTop = '20px';
+    note.style.opacity = '0.6';
+    folderContainer.appendChild(note);
+  }
+});
