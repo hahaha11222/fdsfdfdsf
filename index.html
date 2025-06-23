@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ReelNest</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="theme-red theme-home">
+  <nav class="navbar">
+    <h1 class="logo">pUKE</h1>
+    <div class="user-settings">
+      <label for="profile-upload">
+        <img id="profile-pic" src="https://via.placeholder.com/60" alt="Profile" />
+      </label>
+      <input type="file" id="profile-upload" accept="image/*" hidden />
+    </div>
+  </nav>
+
+  <main>
+    <section id="home" class="page-section">
+      <section class="welcome">
+        <h2>Welcome back, Avriel</h2>
+        <p>Your cinematic journey, organized and cherished in one beautiful space.</p>
+      </section>
+
+      <section class="category-cards">
+        <div class="card" data-target="watchlist">
+          <h3>🎞️ Watchlist</h3>
+          <p>Plan your next movie night</p>
+        </div>
+        <div class="card" data-target="watching">
+          <h3>⏳ Currently Watching</h3>
+          <p>Track your ongoing favorites</p>
+        </div>
+        <div class="card" data-target="finished">
+          <h3>✅ Finished</h3>
+          <p>Celebrate what you've completed</p>
+        </div>
+      </section>
+
+      <section class="favorites">
+        <div class="section-header">
+          <h4>Top Picks</h4>
+        </div>
+        <div class="poster-row" id="top-picks">
+          <div class="poster-slot">+</div>
+          <div class="poster-slot">+</div>
+          <div class="poster-slot">+</div>
+        </div>
+      </section>
+
+      <footer class="theme-switch">
+        <span onclick="setTheme('red')" class="dot red"></span>
+        <span onclick="setTheme('black')" class="dot black"></span>
+        <span onclick="setTheme('blue')" class="dot blue"></span>
+      </footer>
+    </section>
+
+    <!-- WATCHLIST PAGE -->
+    <section id="watchlist" class="page-section hidden">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2>Watchlist</h2>
+      <div class="folder-container" id="watchlist-folders"></div>
+      <button class="fab" onclick="showFolderPrompt()">＋</button>
+    </section>
+
+    <!-- WATCHING PAGE -->
+    <section id="watching" class="page-section hidden">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2>Currently Watching</h2>
+      <div class="movie-list netflix-style" id="watching-movies"></div>
+    </section>
+
+    <!-- FINISHED PAGE -->
+    <section id="finished" class="page-section hidden">
+      <button class="back-btn" onclick="showPage('home')">← Back</button>
+      <h2>Finished</h2>
+      <div class="movie-list netflix-style" id="finished-movies"></div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
