@@ -1,15 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Reel Folder View</title>
-  <link href="https://fonts.googleapis.com/css2?family=Merriweather&family=Satisfy&family=Poppins:wght@300;400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Satisfy&family=Poppins:wght@300;400&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <main class="folder-empty-view">
+
+    <!-- Film Tag Header -->
     <section class="film-tag-header">
       <div class="film-tag-wrapper">
         <div class="film-tag-frame">
@@ -18,17 +19,20 @@
             avriel’s logs · entry <span id="entryCount">–</span> · 07.06.25
           </div>
         </div>
-        <div class="top-dots" title="Toggle typography">*⁠.⁠✧</div>
+        <div class="top-dots">*⁠.⁠✧</div>
       </div>
     </section>
 
+    <!-- Letter -->
     <section class="letter-section centered">
       <div class="letter-quote">“I want all of you, forever, you and me, every day.”</div>
       <div class="letter-source">— the notebook</div>
     </section>
 
+    <!-- Separator -->
     <div class="section-separator"><span>⋆ ⋯ ✧ ⋯ ⋆</span></div>
 
+    <!-- Folder -->
     <section class="folder-empty-message">
       <div class="folder-title">
         <svg class="sparkle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -41,10 +45,24 @@
         <button class="add-folder-btn" id="openModalBtn" aria-label="Create new folder">[+]</button>
       </div>
     </section>
+
   </main>
 
   <footer>crafted softly for avriel, one frame at a time. ⁺</footer>
 
+  <!-- Welcome Modal (First Visit) -->
+  <div id="welcomeModal" class="modal hidden">
+    <div class="modal-content welcome-content">
+      <div class="modal-title">dearest avriel,</div>
+      <p>entry no. 1 is live.<br/>
+         lights on, lens steady — your archive is rolling.<br/>
+         add what you love. save what feels.</p>
+      <p class="signature">with love from the director’s chair,<br/>marga 🎬</p>
+      <button id="welcomeCloseBtn" class="modal-create-btn">begin your reel</button>
+    </div>
+  </div>
+
+  <!-- Torn Paper Modal -->
   <div id="folderModal" class="modal hidden">
     <div class="modal-content">
       <div class="modal-title">“give this frame a title.” ✦</div>
@@ -53,6 +71,6 @@
     </div>
   </div>
 
-  <script src="script.js" defer></script>
+  <script src="script.js"></script>
 </body>
 </html>
