@@ -2,84 +2,62 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ReelNest</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Reel Folder View</title>
+  <link href="https://fonts.googleapis.com/css2?family=Merriweather&family=Satisfy&family=Poppins:wght@300;400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="theme-red theme-home">
-  <nav class="navbar">
-    <h1 class="logo">pUKE</h1>
-    <div class="user-settings">
-      <label for="profile-upload">
-        <img id="profile-pic" src="https://via.placeholder.com/60" alt="Profile" />
-      </label>
-      <input type="file" id="profile-upload" accept="image/*" hidden />
-    </div>
-  </nav>
+<body>
+  <main class="folder-empty-view">
 
-  <main>
-    <section id="home" class="page-section">
-      <section class="welcome">
-        <h2>Welcome back, Avriel</h2>
-        <p>Your cinematic journey, organized and cherished in one beautiful space.</p>
-      </section>
-
-      <section class="category-cards">
-        <div class="card" data-target="watchlist">
-          <h3>🎞️ Watchlist</h3>
-          <p>Plan your next movie night</p>
+    <!-- Film Tag Header -->
+    <section class="film-tag-header">
+      <div class="film-tag-wrapper">
+        <div class="film-tag-frame">
+          <div class="film-tag-label">film tag</div>
+          <div class="film-tag-content">
+            avriel’s logs · entry <span id="entryCount">–</span> · 07.06.25
+          </div>
         </div>
-        <div class="card" data-target="watching">
-          <h3>⏳ Currently Watching</h3>
-          <p>Track your ongoing favorites</p>
-        </div>
-        <div class="card" data-target="finished">
-          <h3>✅ Finished</h3>
-          <p>Celebrate what you've completed</p>
-        </div>
-      </section>
-
-      <section class="favorites">
-        <div class="section-header">
-          <h4>Top Picks</h4>
-        </div>
-        <div class="poster-row" id="top-picks">
-          <div class="poster-slot">+</div>
-          <div class="poster-slot">+</div>
-          <div class="poster-slot">+</div>
-        </div>
-      </section>
-
-      <footer class="theme-switch">
-        <span onclick="setTheme('red')" class="dot red"></span>
-        <span onclick="setTheme('black')" class="dot black"></span>
-        <span onclick="setTheme('blue')" class="dot blue"></span>
-      </footer>
+        <div class="top-dots" title="Toggle typography">*⁠.⁠✧</div>
+      </div>
     </section>
 
-    <!-- WATCHLIST PAGE -->
-    <section id="watchlist" class="page-section hidden">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2>Watchlist</h2>
-      <div class="folder-container" id="watchlist-folders"></div>
-      <button class="fab" onclick="showFolderPrompt()">＋</button>
+    <!-- Letter -->
+    <section class="letter-section centered">
+      <div class="letter-quote">“I want all of you, forever, you and me, every day.”</div>
+      <div class="letter-source">— the notebook</div>
     </section>
 
-    <!-- WATCHING PAGE -->
-    <section id="watching" class="page-section hidden">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2>Currently Watching</h2>
-      <div class="movie-list netflix-style" id="watching-movies"></div>
+    <!-- Separator -->
+    <div class="section-separator"><span>⋆ ⋯ ✧ ⋯ ⋆</span></div>
+
+    <!-- Folder -->
+    <section class="folder-empty-message">
+      <div class="folder-title">
+        <svg class="sparkle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2 L13.09 8.26 L19 9.27 L14 13.97 L15.18 20 L12 16.77 L8.82 20 L10 13.97 L5 9.27 L10.91 8.26 L12 2 Z"/>
+        </svg>
+        <span class="folder-charm">✧</span> your folders
+      </div>
+      <div class="folder-empty-text">
+        this space is waiting for your stories.
+        <button class="add-folder-btn" id="openModalBtn" aria-label="Create new folder">[+]</button>
+      </div>
     </section>
 
-    <!-- FINISHED PAGE -->
-    <section id="finished" class="page-section hidden">
-      <button class="back-btn" onclick="showPage('home')">← Back</button>
-      <h2>Finished</h2>
-      <div class="movie-list netflix-style" id="finished-movies"></div>
-    </section>
   </main>
+
+  <footer>crafted softly for avriel, one frame at a time. ⁺</footer>
+
+  <!-- Torn Paper Modal -->
+  <div id="folderModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-title">“give this frame a title.” ✦</div>
+      <input type="text" placeholder="folder name..." class="modal-input" />
+      <button class="modal-create-btn">write it down</button>
+    </div>
+  </div>
 
   <script src="script.js"></script>
 </body>
