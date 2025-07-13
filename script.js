@@ -1,170 +1,175 @@
-const TMDB_API_KEY = "cb169c1f6fad54c5fd4d3eb920e3420e";
-const TMDB_BASE_URL = "https://api.themoviedb.org/3";
-
+const TMDB_API_KEY = "cb169c1f6fad54c5fd4d3eb920e3420e"; // Replace with your actual TMDb API key
 const searchInput = document.getElementById("searchInput");
 const searchResults = document.getElementById("searchResults");
-const sectionContainers = {
-  watchlist: document.querySelector("#watchlist .grid"),
-  watching: document.querySelector("#watching .grid"),
-  finished: document.querySelector("#finished .grid")
-};
+const searchGrid = document.getElementById("searchGrid");
+const homeBtn = document.getElementById("homeBtn");
+const tabs = document.querySelectorAll(".nav-tab");
+const sections = document.querySelectorAll(".section-content");
+const toggleMode = document.getElementById("toggleMode");
 
 const modal = document.getElementById("modal");
 const modalContent = document.getElementById("modalContent");
-const fab = document.getElementById("fab");
 
+// LocalStorage movie state
 let movieData = {
   watchlist: [],
   watching: [],
-  finished: [],
-  notes: {}
+  finished: []
 };
 
 loadFromStorage();
 renderAllSections();
 
-searchInput.addEventListener("keyup", async (e) => {
+// Search functionality
+searchInput.addEventListener("input", async (e) => {
   const query = e.target.value.trim();
-  if (query.length < 2) return (searchResults.innerHTML = "");
-  const data = await searchMovies(query);
-  renderSearchResults(data.results);
+  if (query.length > 0) {
+    searchResults.classList.remove("hidden");
+    document.getElementById("sections").classList.add("hidden");
+    const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+    const data = await res.json();
+    showSearchResults(data.results || []);
+  } else {
+    searchResults.classList.add("hidden");
+    document.getElementById("sections").classList.remove("hidden");
+  }
 });
 
-document.querySelectorAll(".tab-btn").forEach((btn) =>
-  btn.addEventListener("click", () => {
-    document.querySelectorAll(".movie-section").forEach((sec) => sec.classList.add("hidden"));
-    document.getElementById(btn.dataset.tab).classList.remove("hidden");
-  })
-);
+homeBtn.addEventListener("click", () => {
+  searchInput.value = "";
+  searchGrid.innerHTML = "";
+  searchResults.classList.add("hidden");
+  document.getElementById("sections").classList.remove("hidden");
+});
 
-document.getElementById("toggleMode").onclick = () => {
+// Theme toggle
+toggleMode.addEventListener("click", () => {
   document.documentElement.classList.toggle("dark");
-};
+  document.documentElement.classList.toggle("light");
+});
 
-fab.onclick = () => {
-  searchInput.focus();
-};
-
-function saveToStorage() {
-  localStorage.setItem("movieTracker", JSON.stringify(movieData));
-}
-function loadFromStorage() {
-  const data = localStorage.getItem("movieTracker");
-  if (data) movieData = JSON.parse(data);
-}
-function renderAllSections() {
-  ["watchlist", "watching", "finished"].forEach(async (listType) => {
-    sectionContainers[listType].innerHTML = "";
-    for (const id of movieData[listType]) {
-      const movie = await getMovieDetails(id);
-      const card = createMovieCard(movie, listType);
-      sectionContainers[listType].appendChild(card);
-    }
+// Navigation tabs
+tabs.forEach(btn => {
+  btn.addEventListener("click", () => {
+    tabs.forEach(tab => tab.classList.remove("active"));
+    btn.classList.add("active");
+    const tabName = btn.dataset.tab;
+    sections.forEach(section => {
+      section.classList.add("hidden");
+      if (section.id === tabName) section.classList.remove("hidden");
+    });
   });
-}
-function createMovieCard(movie, category) {
-  const div = document.createElement("div");
-  div.className = "movie-card cursor-pointer";
-  div.innerHTML = `
-    <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
-    <div class="p-2">
-      <h3 class="font-bold text-sm">${movie.title}</h3>
-      <p class="text-xs text-gray-500 dark:text-gray-300">${movie.release_date?.split("-")[0]}</p>
-      <textarea class="w-full text-xs mt-1 border rounded p-1" placeholder="Note..." onchange="saveNote(${movie.id}, this.value)">${movieData.notes[movie.id] || ""}</textarea>
-      <div class="mt-2 flex flex-col text-xs space-y-1">
-        ${category !== "watchlist" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'watchlist')">🎯 To Watchlist</button>` : ""}
-        ${category !== "watching" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'watching')">👁 To Watching</button>` : ""}
-        ${category !== "finished" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'finished')">✅ To Finished</button>` : ""}
-        <button onclick="removeMovie(event, ${movie.id}, '${category}')" class="text-red-500">🗑 Remove</button>
-      </div>
-    </div>
-  `;
-  div.onclick = (e) => {
-    if (e.target.tagName === "BUTTON" || e.target.tagName === "TEXTAREA") return;
-    showMovieDetails(movie.id);
-  };
-  return div;
-}
-function renderSearchResults(results) {
-  searchResults.innerHTML = "";
-  results.forEach((movie) => {
-    if (!movie.poster_path) return;
-    const div = document.createElement("div");
-    div.className = "movie-card";
-    div.innerHTML = `
-      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
-      <div class="p-2">
-        <h3 class="font-bold text-sm">${movie.title}</h3>
-        <p class="text-xs text-gray-500">${movie.release_date?.split("-")[0]}</p>
-        <div class="mt-2 flex flex-col text-xs space-y-1">
-          <button onclick="addMovie(${movie.id}, 'watchlist')">🎯 Add to Watchlist</button>
-          <button onclick="addMovie(${movie.id}, 'watching')">👁 Add to Watching</button>
-          <button onclick="addMovie(${movie.id}, 'finished')">✅ Add to Finished</button>
-        </div>
+});
+
+// Render search results
+function showSearchResults(movies) {
+  searchGrid.innerHTML = "";
+  if (!movies.length) {
+    searchGrid.innerHTML = "<p class='text-sm text-gray-500'>No results found.</p>";
+    return;
+  }
+
+  movies.forEach(movie => {
+    const isAdded = isInAnyList(movie.id);
+    const card = document.createElement("div");
+    card.className = "movie-card";
+    card.innerHTML = `
+      <img src="https://image.tmdb.org/t/p/w300${movie.poster_path}" alt="${movie.title}">
+      <div class="p-2 text-center">
+        <p class="text-sm font-semibold">${movie.title}</p>
+        <button class="add-btn ${isAdded ? 'added' : ''}" data-id="${movie.id}" data-title="${movie.title}">
+          ${isAdded ? "✓ Added" : "Add to Watchlist"}
+        </button>
       </div>
     `;
-    searchResults.appendChild(div);
+    const addBtn = card.querySelector("button");
+    if (!isAdded) {
+      addBtn.addEventListener("click", () => {
+        movieData.watchlist.push({ id: movie.id, title: movie.title });
+        saveToStorage();
+        addBtn.classList.add("added");
+        addBtn.textContent = "✓ Added";
+        renderAllSections();
+      });
+    }
+    searchGrid.appendChild(card);
   });
 }
-async function searchMovies(query) {
-  const res = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
-  return res.json();
-}
-async function getMovieDetails(id) {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}`);
-  return res.json();
-}
-function addMovie(id, category) {
-  if (!movieData[category].includes(id)) {
-    movieData[category].push(id);
-    saveToStorage();
-    renderAllSections();
-  }
-}
-function moveMovie(e, id, from, to) {
-  e.stopPropagation();
-  movieData[from] = movieData[from].filter(mid => mid !== id);
-  if (!movieData[to].includes(id)) movieData[to].push(id);
-  saveToStorage();
-  renderAllSections();
-}
-function removeMovie(e, id, from) {
-  e.stopPropagation();
-  movieData[from] = movieData[from].filter(mid => mid !== id);
-  delete movieData.notes[id];
-  saveToStorage();
-  renderAllSections();
-}
-function saveNote(id, val) {
-  movieData.notes[id] = val;
-  saveToStorage();
+
+// Show modal with full info (optional)
+function openModal(contentHTML) {
+  modal.classList.remove("hidden");
+  modalContent.innerHTML = contentHTML;
 }
 function closeModal() {
   modal.classList.add("hidden");
 }
-async function showMovieDetails(id) {
-  const movie = await getMovieDetails(id);
-  const trailer = await getTrailer(id);
-  const cast = await getCast(id);
-  modalContent.innerHTML = `
-    <h2 class="text-lg font-bold mb-2">${movie.title}</h2>
-    <p class="text-sm">${movie.overview}</p>
-    <p class="mt-2 text-sm">Genres: ${movie.genres.map(g => g.name).join(", ")}</p>
-    <p class="text-sm">Runtime: ${movie.runtime} mins</p>
-    <p class="text-sm">Rating: ${movie.vote_average}</p>
-    <p class="text-sm">Cast: ${cast.slice(0,5).map(c => c.name).join(", ")}</p>
-    ${trailer ? `<a class="text-blue-600 underline" href="https://youtube.com/watch?v=${trailer}" target="_blank">🎬 Watch Trailer</a>` : ""}
-  `;
-  modal.classList.remove("hidden");
+
+// Check if movie is in any list
+function isInAnyList(id) {
+  return Object.values(movieData).some(list => list.some(m => m.id === id));
 }
-async function getTrailer(id) {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}/videos?api_key=${TMDB_API_KEY}`);
-  const data = await res.json();
-  const yt = data.results.find(v => v.site === "YouTube" && v.type === "Trailer");
-  return yt?.key || null;
+
+// Render all tabs
+function renderAllSections() {
+  ["watchlist", "watching", "finished"].forEach(key => {
+    const container = document.querySelector(`#${key} .movie-grid`);
+    container.innerHTML = "";
+    const list = movieData[key];
+
+    list.forEach(movie => {
+      const card = document.createElement("div");
+      card.className = "movie-card";
+      card.innerHTML = `
+        <img src="https://image.tmdb.org/t/p/w300_and_h450_bestv2/${movie.poster_path || ""}" alt="${movie.title}">
+        <div class="p-2 text-center">
+          <p class="text-sm font-semibold">${movie.title}</p>
+          <div class="mt-1 flex justify-center gap-2 text-xs">
+            ${key !== "watchlist" ? `<button class="move-btn" data-id="${movie.id}" data-from="${key}" data-to="watchlist">To Watchlist</button>` : ""}
+            ${key !== "watching" ? `<button class="move-btn" data-id="${movie.id}" data-from="${key}" data-to="watching">To Watching</button>` : ""}
+            ${key !== "finished" ? `<button class="move-btn" data-id="${movie.id}" data-from="${key}" data-to="finished">To Finished</button>` : ""}
+            <button class="remove-btn text-red-600" data-id="${movie.id}" data-from="${key}">Remove</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  });
+
+  setupButtons();
 }
-async function getCast(id) {
-  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}/credits?api_key=${TMDB_API_KEY}`);
-  const data = await res.json();
-  return data.cast || [];
+
+function setupButtons() {
+  document.querySelectorAll(".move-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = +btn.dataset.id;
+      const from = btn.dataset.from;
+      const to = btn.dataset.to;
+      const movie = movieData[from].find(m => m.id === id);
+      if (movie) {
+        movieData[from] = movieData[from].filter(m => m.id !== id);
+        movieData[to].push(movie);
+        saveToStorage();
+        renderAllSections();
+      }
+    });
+  });
+
+  document.querySelectorAll(".remove-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = +btn.dataset.id;
+      const from = btn.dataset.from;
+      movieData[from] = movieData[from].filter(m => m.id !== id);
+      saveToStorage();
+      renderAllSections();
+    });
+  });
+}
+
+function saveToStorage() {
+  localStorage.setItem("movieTrackerData", JSON.stringify(movieData));
+}
+function loadFromStorage() {
+  const saved = localStorage.getItem("movieTrackerData");
+  if (saved) movieData = JSON.parse(saved);
 }
