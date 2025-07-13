@@ -1,22 +1,58 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=DM+Serif+Text&display=swap');
+
+body {
+  font-family: 'DM Serif Text', serif;
+}
+
+.font-handwriting {
+  font-family: 'Dancing Script', cursive;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  margin: 1rem 0;
+  font-family: 'Dancing Script', cursive;
+}
+
 .tab-btn {
-  background-color: #f3f4f6;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
+  background-color: #fef3f3;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid #f8d5d5;
+  font-family: 'Dancing Script', cursive;
+  font-size: 1.125rem;
+  transition: 0.3s ease;
 }
 .tab-btn:hover {
-  background-color: #e5e7eb;
+  background-color: #fce8e8;
 }
+
 .movie-card {
-  background-color: white;
-  border-radius: 0.5rem;
+  background-color: #fff8f2;
+  border-radius: 1rem;
   overflow: hidden;
-  box-shadow: 0 0 5px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
   transition: transform 0.2s ease;
 }
 .movie-card:hover {
   transform: scale(1.03);
 }
 .dark .movie-card {
-  background-color: #1f2937;
-  color: white;
+  background-color: #2b2a2a;
+}
+
+textarea {
+  resize: none;
+  background-color: #fdf4f4;
+}
+.dark textarea {
+  background-color: #3a3a3a;
+  color: #f5f5f5;
+}
+
+.bg-paper-light {
+  background: #fcfaf8;
+}
+.bg-paper-dark {
+  background: #1c1c1c;
 }
