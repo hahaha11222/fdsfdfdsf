@@ -1,82 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Reel Folder View</title>
-  <link href="https://fonts.googleapis.com/css2?family=Satisfy&family=Poppins:wght@300;400&family=Indie+Flower&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Movie Tracker</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
-  <main class="folder-empty-view">
-    <section class="film-tag-header">
-      <div class="film-tag-wrapper">
-        <div class="film-tag-frame">
-          <div class="film-tag-label">film tag</div>
-          <div class="film-tag-content">
-            avriel’s logs · entry <span id="entryCount">–</span> · 07.06.25
-          </div>
-        </div>
-        <div class="top-dots">*⁠.⁠✧</div>
+<body class="bg-gray-100 text-gray-900 transition-colors">
+
+  <header class="p-4 bg-white dark:bg-gray-900 dark:text-white shadow flex justify-between items-center">
+    <h1 class="text-2xl font-bold">My Movie Tracker</h1>
+    <div class="flex gap-2 items-center">
+      <input type="text" id="searchInput" placeholder="Search movies..." class="border p-2 rounded w-64 dark:bg-gray-700 dark:text-white">
+      <button id="toggleMode" class="p-2 border rounded">🌓</button>
+    </div>
+  </header>
+
+  <main class="p-4 space-y-6">
+    <section id="searchResults" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></section>
+
+    <div class="flex space-x-2 justify-center">
+      <button class="tab-btn" data-tab="watchlist">🎯 Watchlist</button>
+      <button class="tab-btn" data-tab="watching">👁 Watching</button>
+      <button class="tab-btn" data-tab="finished">✅ Finished</button>
+    </div>
+
+    <section id="movieSections">
+      <div id="watchlist" class="movie-section hidden">
+        <h2 class="text-xl font-semibold my-2">🎯 Watchlist</h2>
+        <div class="sort-controls"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </div>
-    </section>
-
-    <section class="letter-section centered">
-      <div class="letter-quote">“I want all of you, forever, you and me, every day.”</div>
-      <div class="letter-source">— the notebook</div>
-    </section>
-
-    <div class="section-separator"><span>⋆ ⋯ ✧ ⋯ ⋆</span></div>
-
-    <section class="folder-empty-message">
-      <div class="folder-title-wrapper">
-        <div class="folder-title">
-          <svg class="sparkle-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 2 L13.09 8.26 L19 9.27 L14 13.97 L15.18 20 L12 16.77 L8.82 20 L10 13.97 L5 9.27 L10.91 8.26 L12 2 Z"/>
-          </svg>
-          <span class="folder-charm">✧</span>
-          <span>your folders</span>
-          <button class="add-folder-btn tight-btn" id="openModalBtn" aria-label="Create new folder">[+]</button>
-        </div>
+      <div id="watching" class="movie-section hidden">
+        <h2 class="text-xl font-semibold my-2">👁 Watching</h2>
+        <div class="sort-controls"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </div>
-
-      <div class="folder-empty-text">
-        this space is waiting for your stories.
-        <span class="folder-sparkle">✦</span>
-      </div>
-
-      <div class="folder-view-wrapper">
-        <div class="folder-flip-card" id="folderFlipCard">
-          <div class="folder-flip-inner" id="folderFlipInner">
-            <!-- Folder pages will be injected here -->
-          </div>
-        </div>
+      <div id="finished" class="movie-section hidden">
+        <h2 class="text-xl font-semibold my-2">✅ Finished</h2>
+        <div class="sort-controls"></div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"></div>
       </div>
     </section>
   </main>
 
-  <footer>crafted softly for avriel, one frame at a time. ⁺</footer>
+  <button id="fab" class="fixed bottom-6 right-6 p-4 bg-blue-600 text-white rounded-full shadow-xl hover:bg-blue-700">➕</button>
 
-  <!-- Welcome Modal -->
-  <div id="welcomeModal" class="modal hidden">
-    <div class="modal-content welcome-content">
-      <div class="modal-title">dearest avriel,</div>
-      <p>entry no. 1 is live.<br/>
-         lights on, lens steady — your archive is rolling.<br/>
-         add what you love. save what feels.</p>
-      <p class="signature">with love from the director’s chair,<br/>marga 🎬</p>
-      <button id="welcomeCloseBtn" class="modal-create-btn">begin your reel</button>
+  <div id="modal" class="fixed inset-0 hidden bg-black bg-opacity-60 flex justify-center items-center z-50">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded max-w-md w-full relative">
+      <button onclick="closeModal()" class="absolute right-2 top-2 text-xl">✖</button>
+      <div id="modalContent" class="text-sm text-gray-800 dark:text-white"></div>
     </div>
   </div>
 
-  <!-- Folder Modal -->
-  <div id="folderModal" class="modal hidden">
-    <div class="modal-content">
-      <div class="modal-title">“give this frame a title.” ✦</div>
-      <input type="text" placeholder="folder name..." class="modal-input" />
-      <button class="modal-create-btn">write it down</button>
-    </div>
-  </div>
+  <footer class="text-center p-4 text-xs text-gray-600 dark:text-gray-300">
+    This product uses the TMDb API but is not endorsed or certified by TMDb.
+  </footer>
 
   <script src="script.js"></script>
 </body>
