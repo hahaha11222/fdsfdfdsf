@@ -1,58 +1,110 @@
-@import url('https://fonts.googleapis.com/css2?family=Dancing+Script&family=DM+Serif+Text&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Shadows+Into+Light&family=DM+Serif+Display&display=swap');
 
+/* Font presets */
 body {
-  font-family: 'DM Serif Text', serif;
+  font-family: 'DM Serif Display', serif;
+  transition: background 0.3s, color 0.3s;
+}
+.font-script {
+  font-family: 'Shadows Into Light', cursive;
 }
 
-.font-handwriting {
-  font-family: 'Dancing Script', cursive;
-}
-
-.section-title {
-  font-size: 1.5rem;
-  margin: 1rem 0;
-  font-family: 'Dancing Script', cursive;
-}
-
-.tab-btn {
-  background-color: #fef3f3;
-  padding: 0.5rem 1.25rem;
-  border-radius: 9999px;
-  border: 1px solid #f8d5d5;
-  font-family: 'Dancing Script', cursive;
-  font-size: 1.125rem;
-  transition: 0.3s ease;
-}
-.tab-btn:hover {
-  background-color: #fce8e8;
-}
-
-.movie-card {
-  background-color: #fff8f2;
-  border-radius: 1rem;
-  overflow: hidden;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
-  transition: transform 0.2s ease;
-}
-.movie-card:hover {
-  transform: scale(1.03);
-}
-.dark .movie-card {
-  background-color: #2b2a2a;
-}
-
-textarea {
-  resize: none;
-  background-color: #fdf4f4;
-}
-.dark textarea {
-  background-color: #3a3a3a;
-  color: #f5f5f5;
-}
-
+/* Light & dark paper backgrounds */
 .bg-paper-light {
-  background: #fcfaf8;
+  background: #fdfaf6;
 }
 .bg-paper-dark {
   background: #1c1c1c;
+}
+
+/* Section titles */
+.section-title {
+  font-family: 'Shadows Into Light', cursive;
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Movie grid */
+.movie-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Movie card design */
+.movie-card {
+  background-color: #fffdf9;
+  border: 1px solid #f1e8e6;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease;
+}
+.movie-card:hover {
+  transform: scale(1.02);
+}
+.dark .movie-card {
+  background-color: #2a2a2a;
+  border-color: #444;
+}
+
+/* Image */
+.movie-card img {
+  width: 100%;
+  height: 225px;
+  object-fit: cover;
+  border-bottom: 1px solid #e8e8e8;
+}
+
+/* Buttons */
+button {
+  font-family: inherit;
+}
+.nav-tab {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 9999px;
+  background-color: transparent;
+  transition: all 0.3s;
+}
+.nav-tab.active {
+  background-color: #f4e6de;
+  border-color: #e4d5cb;
+}
+.dark .nav-tab.active {
+  background-color: #3c3c3c;
+  border-color: #666;
+}
+.nav-tab:hover {
+  opacity: 0.85;
+}
+
+/* Add buttons */
+.add-btn {
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #d6c5b9;
+  border-radius: 0.5rem;
+  background-color: #fef7f0;
+  font-size: 0.9rem;
+  transition: 0.3s ease;
+}
+.added {
+  background-color: #dbead3;
+  border-color: #b5d1a6;
+  color: #3f7f3e;
+}
+.dark .add-btn {
+  background-color: #444;
+  border-color: #666;
+  color: #eee;
+}
+.dark .added {
+  background-color: #2e4932;
+  border-color: #416b43;
+}
+
+/* Utility */
+.hidden {
+  display: none;
 }
