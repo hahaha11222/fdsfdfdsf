@@ -1,270 +1,170 @@
-const openModalBtn = document.getElementById("openModalBtn");
-const folderModal = document.getElementById("folderModal");
-const welcomeModal = document.getElementById("welcomeModal");
-const welcomeCloseBtn = document.getElementById("welcomeCloseBtn");
-const entryCountEl = document.getElementById("entryCount");
-const modalInput = document.querySelector(".modal-input");
-const modalCreateBtn = document.querySelector("#folderModal .modal-create-btn");
-const folderEmptyText = document.querySelector(".folder-empty-text");
+const TMDB_API_KEY = "cb169c1f6fad54c5fd4d3eb920e3420e";
+const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
-const folderFlipCard = document.getElementById("folderFlipCard");
-const folderFlipInner = document.getElementById("folderFlipInner");
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+const sectionContainers = {
+  watchlist: document.querySelector("#watchlist .grid"),
+  watching: document.querySelector("#watching .grid"),
+  finished: document.querySelector("#finished .grid")
+};
 
-let folders = [];
-let currentPage = 0;
-let totalPages = 0;
+const modal = document.getElementById("modal");
+const modalContent = document.getElementById("modalContent");
+const fab = document.getElementById("fab");
 
-const mainFolderView = document.querySelector("main.folder-empty-view");
+let movieData = {
+  watchlist: [],
+  watching: [],
+  finished: [],
+  notes: {}
+};
 
-let folderDetailView = null;
-let currentFolderIndex = null;
+loadFromStorage();
+renderAllSections();
 
-let addSceneModal = null;
-let addSceneForm = null;
-
-// Open folder modal
-openModalBtn.addEventListener("click", () => {
-  modalInput.value = "";
-  folderModal.classList.remove("hidden");
+searchInput.addEventListener("keyup", async (e) => {
+  const query = e.target.value.trim();
+  if (query.length < 2) return (searchResults.innerHTML = "");
+  const data = await searchMovies(query);
+  renderSearchResults(data.results);
 });
 
-// Close modals on outside click
-window.addEventListener("click", (e) => {
-  if (e.target === folderModal) folderModal.classList.add("hidden");
-  if (e.target === welcomeModal) {
-    welcomeModal.classList.add("hidden");
-    startEntryCount();
-  }
-  if (e.target === addSceneModal) addSceneModal.classList.add("hidden");
-});
+document.querySelectorAll(".tab-btn").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".movie-section").forEach((sec) => sec.classList.add("hidden"));
+    document.getElementById(btn.dataset.tab).classList.remove("hidden");
+  })
+);
 
-// Close welcome modal on button click
-welcomeCloseBtn.addEventListener("click", () => {
-  welcomeModal.classList.add("hidden");
-  startEntryCount();
-});
+document.getElementById("toggleMode").onclick = () => {
+  document.documentElement.classList.toggle("dark");
+};
 
-// Create folder
-modalCreateBtn.addEventListener("click", () => {
-  const name = modalInput.value.trim();
-  if (!name) return;
-  folders.push(name);
-  updateFoldersUI();
-  folderModal.classList.add("hidden");
-});
+fab.onclick = () => {
+  searchInput.focus();
+};
 
-// Create Add Scene Modal with approved design
-function createAddSceneModal() {
-  addSceneModal = document.createElement("div");
-  addSceneModal.id = "addSceneModal";
-  addSceneModal.className = "modal hidden";
-  addSceneModal.innerHTML = `
-    <div class="modal-content">
-      <div class="modal-title">Add a Scene / Movie</div>
-      <input type="text" name="title" placeholder="Movie Title" class="modal-input" />
-      <input type="date" name="releaseDate" class="modal-input" />
-      <input type="number" name="rating" min="0" max="10" step="0.1" placeholder="Rating (0-10)" class="modal-input" />
-      <select name="status" class="modal-input">
-        <option value="" disabled selected>Select Status</option>
-        <option value="Watchlist">Watchlist</option>
-        <option value="Watching">Watching</option>
-        <option value="Finished">Finished</option>
-      </select>
-      <button class="modal-create-btn">Add Scene</button>
+function saveToStorage() {
+  localStorage.setItem("movieTracker", JSON.stringify(movieData));
+}
+function loadFromStorage() {
+  const data = localStorage.getItem("movieTracker");
+  if (data) movieData = JSON.parse(data);
+}
+function renderAllSections() {
+  ["watchlist", "watching", "finished"].forEach(async (listType) => {
+    sectionContainers[listType].innerHTML = "";
+    for (const id of movieData[listType]) {
+      const movie = await getMovieDetails(id);
+      const card = createMovieCard(movie, listType);
+      sectionContainers[listType].appendChild(card);
+    }
+  });
+}
+function createMovieCard(movie, category) {
+  const div = document.createElement("div");
+  div.className = "movie-card cursor-pointer";
+  div.innerHTML = `
+    <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
+    <div class="p-2">
+      <h3 class="font-bold text-sm">${movie.title}</h3>
+      <p class="text-xs text-gray-500 dark:text-gray-300">${movie.release_date?.split("-")[0]}</p>
+      <textarea class="w-full text-xs mt-1 border rounded p-1" placeholder="Note..." onchange="saveNote(${movie.id}, this.value)">${movieData.notes[movie.id] || ""}</textarea>
+      <div class="mt-2 flex flex-col text-xs space-y-1">
+        ${category !== "watchlist" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'watchlist')">🎯 To Watchlist</button>` : ""}
+        ${category !== "watching" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'watching')">👁 To Watching</button>` : ""}
+        ${category !== "finished" ? `<button onclick="moveMovie(event, ${movie.id}, '${category}', 'finished')">✅ To Finished</button>` : ""}
+        <button onclick="removeMovie(event, ${movie.id}, '${category}')" class="text-red-500">🗑 Remove</button>
+      </div>
     </div>
   `;
-  document.body.appendChild(addSceneModal);
-
-  addSceneForm = addSceneModal.querySelector("div.modal-content");
-
-  // Add submit button functionality: just log data for now
-  const addBtn = addSceneModal.querySelector("button.modal-create-btn");
-  addBtn.addEventListener("click", () => {
-    const title = addSceneModal.querySelector("input[name='title']").value.trim();
-    const releaseDate = addSceneModal.querySelector("input[name='releaseDate']").value;
-    const rating = addSceneModal.querySelector("input[name='rating']").value;
-    const status = addSceneModal.querySelector("select[name='status']").value;
-
-    if (!title || !releaseDate || !rating || !status) {
-      alert("Please fill out all fields.");
-      return;
-    }
-
-    console.log("Movie data submitted:", { title, releaseDate, rating, status });
-
-    // Just close modal for now
-    addSceneModal.classList.add("hidden");
+  div.onclick = (e) => {
+    if (e.target.tagName === "BUTTON" || e.target.tagName === "TEXTAREA") return;
+    showMovieDetails(movie.id);
+  };
+  return div;
+}
+function renderSearchResults(results) {
+  searchResults.innerHTML = "";
+  results.forEach((movie) => {
+    if (!movie.poster_path) return;
+    const div = document.createElement("div");
+    div.className = "movie-card";
+    div.innerHTML = `
+      <img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" />
+      <div class="p-2">
+        <h3 class="font-bold text-sm">${movie.title}</h3>
+        <p class="text-xs text-gray-500">${movie.release_date?.split("-")[0]}</p>
+        <div class="mt-2 flex flex-col text-xs space-y-1">
+          <button onclick="addMovie(${movie.id}, 'watchlist')">🎯 Add to Watchlist</button>
+          <button onclick="addMovie(${movie.id}, 'watching')">👁 Add to Watching</button>
+          <button onclick="addMovie(${movie.id}, 'finished')">✅ Add to Finished</button>
+        </div>
+      </div>
+    `;
+    searchResults.appendChild(div);
   });
 }
-
-// Initialize add scene modal on page load
-createAddSceneModal();
-
-function updateFoldersUI() {
-  if (folders.length > 0) folderEmptyText.style.display = "none";
-  else folderEmptyText.style.display = "block";
-
-  folderFlipInner.innerHTML = "";
-  const pages = [];
-  pages.push(folders.slice(0, 4));
-  for (let i = 4; i < folders.length; i += 8) {
-    pages.push(folders.slice(i, i + 8));
+async function searchMovies(query) {
+  const res = await fetch(`${TMDB_BASE_URL}/search/movie?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(query)}`);
+  return res.json();
+}
+async function getMovieDetails(id) {
+  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}?api_key=${TMDB_API_KEY}`);
+  return res.json();
+}
+function addMovie(id, category) {
+  if (!movieData[category].includes(id)) {
+    movieData[category].push(id);
+    saveToStorage();
+    renderAllSections();
   }
-  totalPages = pages.length;
-
-  pages.forEach((pageFolders, index) => {
-    const face = document.createElement("div");
-    face.className = "folder-flip-face";
-    face.style.display = index === currentPage ? "block" : "none";
-    face.style.position = "absolute";
-    face.style.top = "0";
-    face.style.left = "0";
-    face.style.width = "100%";
-    face.style.backfaceVisibility = "hidden";
-
-    const ul = document.createElement("ul");
-    ul.className = "folder-list";
-
-    pageFolders.forEach((title, folderIdx) => {
-      const li = document.createElement("li");
-      li.textContent = title;
-      li.tabIndex = 0;
-      li.addEventListener("click", () => openFolderDetail(index, folderIdx));
-      ul.appendChild(li);
-    });
-
-    face.appendChild(ul);
-
-    const btnWrapper = document.createElement("div");
-    btnWrapper.style.textAlign = "center";
-    btnWrapper.style.display = "flex";
-    btnWrapper.style.justifyContent = "center";
-    btnWrapper.style.gap = "0.5rem";
-
-    if (index > 0) {
-      const backBtn = document.createElement("button");
-      backBtn.className = "flip-btn";
-      backBtn.textContent = "show less";
-      backBtn.addEventListener("click", () => {
-        currentPage = index - 1;
-        animateFlip();
-      });
-      btnWrapper.appendChild(backBtn);
-    }
-
-    if (index < pages.length - 1) {
-      const moreBtn = document.createElement("button");
-      moreBtn.className = "flip-btn";
-      moreBtn.textContent = "more folders";
-      moreBtn.addEventListener("click", () => {
-        currentPage = index + 1;
-        animateFlip();
-      });
-      btnWrapper.appendChild(moreBtn);
-    }
-
-    face.appendChild(btnWrapper);
-    folderFlipInner.appendChild(face);
-  });
-
-  animateFlip();
 }
-
-function animateFlip() {
-  folderFlipInner.style.transition = "opacity 0.3s ease";
-  folderFlipInner.style.opacity = 0;
-  setTimeout(() => {
-    const allFaces = folderFlipInner.querySelectorAll(".folder-flip-face");
-    allFaces.forEach((face, index) => {
-      face.style.display = index === currentPage ? "block" : "none";
-    });
-    folderFlipInner.style.opacity = 1;
-  }, 200);
+function moveMovie(e, id, from, to) {
+  e.stopPropagation();
+  movieData[from] = movieData[from].filter(mid => mid !== id);
+  if (!movieData[to].includes(id)) movieData[to].push(id);
+  saveToStorage();
+  renderAllSections();
 }
-
-function openFolderDetail(pageIndex, folderIdx) {
-  let realIdx = pageIndex === 0 ? folderIdx : 4 + (pageIndex - 1) * 8 + folderIdx;
-  currentFolderIndex = realIdx;
-
-  if (!folderDetailView) {
-    folderDetailView = document.createElement("section");
-    folderDetailView.className = "folder-detail-view";
-    document.body.appendChild(folderDetailView);
-  }
-
-  folderDetailView.innerHTML = "";
-
-  const backBtn = document.createElement("button");
-  backBtn.className = "back-btn";
-  backBtn.textContent = "← Back to your folders";
-  backBtn.addEventListener("click", () => {
-    folderDetailView.style.display = "none";
-    mainFolderView.style.display = "block";
-  });
-  folderDetailView.appendChild(backBtn);
-
-  const filmTag = document.createElement("div");
-  filmTag.className = "film-tag-frame";
-  filmTag.style.margin = "1rem auto";
-  filmTag.style.maxWidth = "400px";
-  filmTag.innerHTML = `
-    <div class="film-tag-label">folder</div>
-    <div class="film-tag-content">
-      🎞️ ${folders[realIdx]} · entry ${realIdx + 1} · ${new Date().toLocaleDateString()}
-    </div>
+function removeMovie(e, id, from) {
+  e.stopPropagation();
+  movieData[from] = movieData[from].filter(mid => mid !== id);
+  delete movieData.notes[id];
+  saveToStorage();
+  renderAllSections();
+}
+function saveNote(id, val) {
+  movieData.notes[id] = val;
+  saveToStorage();
+}
+function closeModal() {
+  modal.classList.add("hidden");
+}
+async function showMovieDetails(id) {
+  const movie = await getMovieDetails(id);
+  const trailer = await getTrailer(id);
+  const cast = await getCast(id);
+  modalContent.innerHTML = `
+    <h2 class="text-lg font-bold mb-2">${movie.title}</h2>
+    <p class="text-sm">${movie.overview}</p>
+    <p class="mt-2 text-sm">Genres: ${movie.genres.map(g => g.name).join(", ")}</p>
+    <p class="text-sm">Runtime: ${movie.runtime} mins</p>
+    <p class="text-sm">Rating: ${movie.vote_average}</p>
+    <p class="text-sm">Cast: ${cast.slice(0,5).map(c => c.name).join(", ")}</p>
+    ${trailer ? `<a class="text-blue-600 underline" href="https://youtube.com/watch?v=${trailer}" target="_blank">🎬 Watch Trailer</a>` : ""}
   `;
-  folderDetailView.appendChild(filmTag);
-
-  const movieSection = document.createElement("div");
-  movieSection.style.marginTop = "2rem";
-  movieSection.style.maxWidth = "420px";
-  movieSection.style.marginLeft = "auto";
-  movieSection.style.marginRight = "auto";
-
-  const addMovieBtn = document.createElement("button");
-  addMovieBtn.innerHTML = `
-    <svg xmlns="http://www.w3.org/2000/svg" style="width: 18px; vertical-align: middle; margin-right: 6px;" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-    </svg>
-    Add Scene
-  `;
-  addMovieBtn.className = "flip-btn";
-  addMovieBtn.style.fontWeight = "bold";
-  addMovieBtn.style.marginBottom = "1.2rem";
-
-  // Open Add Scene modal on button click
-  addMovieBtn.addEventListener("click", () => {
-    addSceneModal.classList.remove("hidden");
-  });
-
-  movieSection.appendChild(addMovieBtn);
-
-  folderDetailView.appendChild(movieSection);
-
-  mainFolderView.style.display = "none";
-  folderDetailView.style.display = "block";
+  modal.classList.remove("hidden");
 }
-
-function updateEntryCount() {
-  let count = localStorage.getItem("entryCount");
-  count = count ? parseInt(count) + 1 : 1;
-  localStorage.setItem("entryCount", count);
-  entryCountEl.textContent = count;
-  entryCountEl.style.opacity = 1;
+async function getTrailer(id) {
+  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}/videos?api_key=${TMDB_API_KEY}`);
+  const data = await res.json();
+  const yt = data.results.find(v => v.site === "YouTube" && v.type === "Trailer");
+  return yt?.key || null;
 }
-
-function startEntryCount() {
-  updateEntryCount();
+async function getCast(id) {
+  const res = await fetch(`${TMDB_BASE_URL}/movie/${id}/credits?api_key=${TMDB_API_KEY}`);
+  const data = await res.json();
+  return data.cast || [];
 }
-
-window.addEventListener("DOMContentLoaded", () => {
-  const hasVisited = localStorage.getItem("hasVisited");
-  if (!hasVisited) {
-    welcomeModal.classList.remove("hidden");
-    localStorage.setItem("hasVisited", "true");
-    entryCountEl.textContent = "–";
-    entryCountEl.style.opacity = 0;
-  } else {
-    startEntryCount();
-  }
-});
